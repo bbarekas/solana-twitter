@@ -18,42 +18,46 @@ describe("solana-twitter", () => {
 
   it('can send a new tweet', async () => {
     // Before sending the transaction to the blockchain.
+    const anchorProvider = program.provider as anchor.AnchorProvider
     const tweet = anchor.web3.Keypair.generate();
 
-    await program.rpc.sendTweet('veganism', 'Yay Tofu!', {
-      accounts: {
-        tweet: tweet.publicKey,
-        author: program.provider.wallet.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-      signers: [tweet],
-    });
+    await program.methods
+        .sendTweet('veganism', 'Hummus, am I right?')
+        .accounts({
+          tweet: tweet.publicKey,
+          author: anchorProvider.wallet.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        })
+        .signers([tweet])
+        .rpc()
 
     // After sending the transaction to the blockchain.
     // Fetch the account details of the created tweet.
     const tweetAccount = await program.account.tweet.fetch(tweet.publicKey);
-    //console.log(tweetAccount);
-    //console.log(program.provider.wallet.publicKey.toBase58());
+    console.log(tweetAccount);
+    console.log(program.provider.wallet.publicKey.toBase58());
 
     // Ensure it has the right data.
-    assert.equal(tweetAccount.author.toBase58(), program.provider.wallet.publicKey.toBase58());
+    assert.equal(tweetAccount.author.toBase58(), anchorProvider.wallet.publicKey.toBase58());
     assert.equal(tweetAccount.topic, 'veganism');
-    assert.equal(tweetAccount.content, 'Yay Tofu!');
+    assert.equal(tweetAccount.content, 'Hummus, am I right?');
     assert.ok(tweetAccount.timestamp);
   });
 
   it('can send a new tweet without a topic', async () => {
     // Call the "SendTweet" instruction.
-    const tweet = anchor.web3.Keypair.generate();
     const anchorProvider = program.provider as anchor.AnchorProvider
-    await program.rpc.sendTweet('', 'gm', {
-      accounts: {
-        tweet: tweet.publicKey,
-        author: anchorProvider.wallet.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-      signers: [tweet],
-    });
+    const tweet = anchor.web3.Keypair.generate();
+
+    await program.methods
+        .sendTweet('', 'gm')
+        .accounts({
+          tweet: tweet.publicKey,
+          author: anchorProvider.wallet.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        })
+        .signers([tweet])
+        .rpc()
 
     // Fetch the account details of the created tweet.
     const tweetAccount = await program.account.tweet.fetch(tweet.publicKey);
@@ -73,19 +77,30 @@ describe("solana-twitter", () => {
 
     // Call the "SendTweet" instruction on behalf of this other user.
     const tweet = anchor.web3.Keypair.generate();
-    await program.rpc.sendTweet('veganism', 'Yay Tofu!', {
-      accounts: {
-        tweet: tweet.publicKey,
-        author: otherUser.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-      signers: [otherUser, tweet],
-    });
+
+    await program.methods
+        .sendTweet('veganism', 'Yay Tofu!')
+        .accounts({
+          tweet: tweet.publicKey,
+          author: otherUser.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        })
+        .signers([otherUser, tweet])
+        .rpc()
+
 
     // Fetch the account details of the created tweet.
     const tweetAccount = await program.account.tweet.fetch(tweet.publicKey);
 
-    // Ensure it has the right data.
+    // Ensure it has the right data.await program.methods
+    //   .sendTweet('veganism', 'Hummus, am I right?')
+    //   .accounts({
+    //     tweet: tweet.publicKey,
+    //     author: provider.wallet.publicKey,
+    //     systemProgram: anchor.web3.SystemProgram.programId,
+    //   })
+    //   .signers([tweet])
+    //   .rpc()
     assert.equal(tweetAccount.author.toBase58(), otherUser.publicKey.toBase58());
     assert.equal(tweetAccount.topic, 'veganism');
     assert.equal(tweetAccount.content, 'Yay Tofu!');
@@ -94,13 +109,15 @@ describe("solana-twitter", () => {
 
   it('cannot provide a topic with more than 50 characters', async () => {
     try {
+      const anchorProvider = program.provider as anchor.AnchorProvider
       const tweet = anchor.web3.Keypair.generate();
       const topicWith51Chars = 'x'.repeat(51);
+
       await program.methods
           .sendTweet(topicWith51Chars, 'Yay Tofu!')
           .accounts({
             tweet: tweet.publicKey,
-            author: program.provider.wallet.publicKey,
+            author: anchorProvider.wallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
           })
           .signers([tweet])
@@ -115,6 +132,7 @@ describe("solana-twitter", () => {
 
   it('cannot provide a content with more than 280 characters', async () => {
     try {
+      const anchorProvider = program.provider as anchor.AnchorProvider
       const tweet = anchor.web3.Keypair.generate();
       const contentWith281Chars = 'x'.repeat(281);
 
@@ -122,7 +140,7 @@ describe("solana-twitter", () => {
           .sendTweet('veganism', contentWith281Chars)
           .accounts({
             tweet: tweet.publicKey,
-            author: program.provider.wallet.publicKey,
+            author: anchorProvider.wallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
           })
           .signers([tweet])
