@@ -4,7 +4,11 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
+    "serve:testnet": "vue-cli-service serve --mode testnet",
+    "serve:mainnet": "vue-cli-service serve --mode mainnet",
     "build": "vue-cli-service build",
+    "build:testnet": "vue-cli-service build --mode testnet",
+    "build:mainnet": "vue-cli-service build --mode mainnet",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
